@@ -186,7 +186,7 @@ def main():
     st.markdown("""
     <div class='demo-warning'>
         <h3>Demo Testing Version</h3>
-        <p>This is a small demo for testing purposes. Please ensure uploaded files are less than <strong>15MB</strong> for optimal performance.</p>
+        <p>This is a small demo for testing purposes</p>
         <p><strong>Detection Classes:</strong> Fall Detected, Walking, Sitting</p>
     </div>
     """, unsafe_allow_html=True)
@@ -380,8 +380,7 @@ def main():
     1. **Image**: Upload JPG/PNG files
     2. **Video**: Upload MP4/AVI/MOV files  
     3. **Live**: Use your webcam for real-time detection
-    4. **File Limit**: Maximum 15MB per file
-    5. **Download**: Get processed results
+    4. **Download**: Get processed results
     """)
     
     # Footer
@@ -396,3 +395,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
