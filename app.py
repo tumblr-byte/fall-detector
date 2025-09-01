@@ -185,7 +185,7 @@ def main():
     # Demo warning
     st.markdown("""
     <div class='demo-warning'>
-        <h3>⚠️ Demo Testing Version</h3>
+        <h3>Demo Testing Version</h3>
         <p>This is a small demo for testing purposes. Please ensure uploaded files are less than <strong>15MB</strong> for optimal performance.</p>
         <p><strong>Detection Classes:</strong> Fall Detected, Walking, Sitting</p>
     </div>
@@ -388,10 +388,11 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
-        <p>🔬 Fall Detection Demo | Built with YOLO & Streamlit</p>
-        <p>⚠️ This is a testing demo - Results may vary</p>
+        <p>Fall Detection Demo | Built with YOLO & Streamlit</p>
+        <p>This is a testing demo - Results may vary</p>
     </div>
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
+
     main()
