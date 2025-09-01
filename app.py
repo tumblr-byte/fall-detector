@@ -264,7 +264,7 @@ def main():
         st.header("Video Detection")
         
         uploaded_file = st.file_uploader(
-            "Choose a video file (Max 15MB)",
+            "Choose a video file ",
             type=['mp4', 'avi', 'mov', 'mkv'],
             help="Upload a video to detect falls, walking, or sitting"
         )
@@ -395,5 +395,6 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
