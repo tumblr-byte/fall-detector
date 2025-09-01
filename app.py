@@ -208,7 +208,7 @@ def main():
         st.header("Image Detection")
         
         uploaded_file = st.file_uploader(
-            "Choose an image file (Max 15MB)",
+            "Choose an image file",
             type=['jpg', 'jpeg', 'png', 'bmp'],
             help="Upload an image to detect falls, walking, or sitting"
         )
@@ -372,7 +372,7 @@ def main():
     st.sidebar.markdown("### Detection Classes")
     for class_name, color in CLASS_COLORS.items():
         color_hex = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
-        st.sidebar.markdown(f"🔸 **{class_name}** - <span style='color:{color_hex}'>●</span>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"🔸 **{class_name}** - <span style='color:{color_hex}'></span>", unsafe_allow_html=True)
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Instructions")
@@ -395,4 +395,5 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
