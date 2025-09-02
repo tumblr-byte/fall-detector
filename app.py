@@ -7,6 +7,7 @@ import os
 from PIL import Image
 import io
 import time
+import datetime
 
 # Configure page
 st.set_page_config(
@@ -36,6 +37,29 @@ st.markdown("""
         font-size: 18px;
         border-radius: 10px;
     }
+    .live-camera-frame {
+        width: 500px;
+        height: 500px;
+        border: 2px solid #ff4b4b;
+        border-radius: 10px;
+        margin: 0 auto;
+        display: block;
+    }
+    .timer-display {
+        background-color: #f0f2f6;
+        border: 2px solid #ff4b4b;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin: 20px 0;
+    }
+    .demo-limit-warning {
+        background-color: #ffe6e6;
+        border: 2px solid #ff4b4b;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -46,6 +70,9 @@ CLASS_COLORS = {
     "Walking": (0, 255, 0),          # Green  
     "Sitting": (0, 0, 255)           # Blue
 }
+
+# Demo time limit (5 minutes)
+DEMO_TIME_LIMIT = 5 * 60  # 300 seconds
 
 # Load YOLO model
 @st.cache_resource
@@ -98,6 +125,12 @@ def draw_predictions(image, results):
                        font, font_scale, (255, 255, 255), thickness)
     
     return img_copy
+
+def format_time_remaining(seconds_remaining):
+    """Format remaining time as MM:SS"""
+    minutes = int(seconds_remaining // 60)
+    seconds = int(seconds_remaining % 60)
+    return f"{minutes:02d}:{seconds:02d}"
 
 def process_image(uploaded_file, model):
     """Process uploaded image"""
@@ -312,8 +345,23 @@ def main():
     elif detection_mode == "📹 Live Webcam":
         st.header("Live Webcam Detection")
         
+        # Demo time limit warning
+        st.markdown(f"""
+        <div class='demo-limit-warning'>
+            <h4>🕐 Demo Time Limit: 5 Minutes</h4>
+            <p><strong>Why the time limit?</strong></p>
+            <ul>
+                <li><strong>Server Resource Management:</strong> Continuous live processing consumes significant computational resources that need to be shared among multiple users</li>
+                <li><strong>Cost Optimization:</strong> Real-time AI inference requires GPU/CPU intensive operations that are expensive to maintain for extended periods</li>
+                <li><strong>Demo Purpose:</strong> This is a demonstration version designed to showcase the fall detection capabilities rather than provide 24/7 monitoring</li>
+                <li><strong>Fair Usage:</strong> The time limit ensures all users get a chance to test the system effectively</li>
+            </ul>
+            <p><em>For production deployment with unlimited runtime, please contact us for enterprise solutions.</em></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         # Instructions
-        st.info("Click 'Start Live Detection' to begin real-time fall detection using your webcam.")
+        st.info("Click 'Start Live Detection' to begin real-time fall detection using your webcam (Limited to 5 minutes).")
         
         col1, col2 = st.columns([1, 1])
         
@@ -323,8 +371,13 @@ def main():
         with col2:
             stop_detection = st.button("⏹️ Stop Detection", key="stop_live")
         
-        # Placeholder for webcam feed
+        # Timer display placeholder
+        timer_placeholder = st.empty()
+        
+        # Placeholder for webcam feed with fixed size
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
         frame_placeholder = st.empty()
+        st.markdown("</div>", unsafe_allow_html=True)
         
         if start_detection:
             cap = cv2.VideoCapture(0)
@@ -339,23 +392,65 @@ def main():
             
             st.success("Live detection started! Press 'Stop Detection' to end.")
             
+            # Start timer
+            start_time = time.time()
+            
             while True:
+                current_time = time.time()
+                elapsed_time = current_time - start_time
+                remaining_time = DEMO_TIME_LIMIT - elapsed_time
+                
+                # Check if time limit exceeded
+                if elapsed_time >= DEMO_TIME_LIMIT:
+                    st.warning("⏰ Demo time limit reached (5 minutes)!")
+                    st.markdown("""
+                    <div class='demo-limit-warning'>
+                        <h4>🚫 Demo Session Expired</h4>
+                        <p><strong>Time limit reached for the following reasons:</strong></p>
+                        <ul>
+                            <li><strong>Resource Conservation:</strong> Extended live processing would consume excessive server resources needed by other users</li>
+                            <li><strong>Infrastructure Costs:</strong> Continuous AI inference operations are computationally expensive and unsustainable for free demo usage</li>
+                            <li><strong>Demonstration Purpose:</strong> You've experienced the core functionality - the system successfully detects falls, walking, and sitting in real-time</li>
+                            <li><strong>Quality Assurance:</strong> Short sessions ensure optimal performance without system overload</li>
+                        </ul>
+                        <p><strong>What you've accomplished:</strong> You've tested the live fall detection system and seen its real-time capabilities!</p>
+                        <p><em>To restart the demo, simply refresh the page and click 'Start Live Detection' again.</em></p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    break
+                
+                # Display timer
+                timer_placeholder.markdown(f"""
+                <div class='timer-display'>
+                    <h3>⏱️ Demo Time Remaining: {format_time_remaining(remaining_time)}</h3>
+                    <p>Elapsed: {format_time_remaining(elapsed_time)} / 05:00</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 ret, frame = cap.read()
                 if not ret:
                     st.error("Failed to read from webcam")
                     break
                 
+                # Resize frame to 500x500 for display
+                frame_resized = cv2.resize(frame, (500, 500))
+                
                 # Run prediction
-                results = model.predict(source=frame, conf=0.6, verbose=False)
+                results = model.predict(source=frame_resized, conf=0.6, verbose=False)
                 
                 # Draw predictions
-                result_frame = draw_predictions(frame, results)
+                result_frame = draw_predictions(frame_resized, results)
                 
                 # Convert BGR to RGB for display
                 result_frame_rgb = cv2.cvtColor(result_frame, cv2.COLOR_BGR2RGB)
                 
-                # Display frame
-                frame_placeholder.image(result_frame_rgb, channels="RGB", use_column_width=True)
+                # Display frame with fixed size
+                frame_placeholder.image(
+                    result_frame_rgb, 
+                    channels="RGB", 
+                    width=500,
+                    caption="Live Fall Detection Feed (500x500px)"
+                )
                 
                 # Check if stop button was pressed
                 if stop_detection:
@@ -365,6 +460,7 @@ def main():
                 time.sleep(0.1)
             
             cap.release()
+            timer_placeholder.empty()
             st.info("Live detection stopped.")
     
     # Sidebar information
@@ -379,8 +475,20 @@ def main():
     st.sidebar.markdown("""
     1. **Image**: Upload JPG/PNG files
     2. **Video**: Upload MP4/AVI/MOV files  
-    3. **Live**: Use your webcam for real-time detection
+    3. **Live**: Use your webcam for real-time detection (5 min limit)
     4. **Download**: Get processed results
+    """)
+    
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### Live Demo Limits")
+    st.sidebar.markdown("""
+    **Why 5 minutes?**
+    - Resource management
+    - Cost optimization  
+    - Fair usage policy
+    - Demo demonstration purpose
+    
+    *Enterprise solutions available for unlimited usage*
     """)
     
     # Footer
@@ -388,13 +496,9 @@ def main():
     st.markdown("""
     <div style='text-align: center; color: #666;'>
         <p>Fall Detection Demo | Built with YOLO & Streamlit</p>
-        <p>This is a testing demo - Results may vary</p>
+        <p>This is a testing demo - Results may vary | Live detection limited to 5 minutes</p>
     </div>
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
-
     main()
-
-
-
